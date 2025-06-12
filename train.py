@@ -9,9 +9,7 @@ device='cpu'
 def data_prepare():
     data = Data()
     t_train, x_train = data.training_data()
-    # x_train = x_train.float().to(device).requires_grad_(True)
     t_test, x_test = data.test_data()
-    # x_test = x_test.float().to(device).requires_grad_(True)
 
     # prepare training data: input is X_train and ground truth is y_train
     X_train, y_train, t_train = x_train[:-1], x_train[1:], t_train[:-1]
@@ -28,7 +26,7 @@ def train():
     hamODE = HamODE().to(device)
     optimizer = torch.optim.Adam(hamODE.parameters(), lr=1e-3)
     criterion = torch.nn.MSELoss()
-    num_epochs = 500
+    num_epochs = 100
     # X_initial = X_train[0].detach().requires_grad_()
 
     for epoch in range(num_epochs):
@@ -42,7 +40,7 @@ def train():
         optimizer.step()
 
 
-        if (epoch + 1) % 50 == 0:
+        if (epoch + 1) % 10 == 0:
             print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
 
 

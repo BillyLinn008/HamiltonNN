@@ -4,7 +4,7 @@ from torchdiffeq import odeint
 import torch
 
 class Data():
-    def __init__(self, N_data=20, t_tot=10, ratio=0.75, r_initial=torch.tensor([1.0, 0.0]), 
+    def __init__(self, N_data=100, t_tot=10, ratio=0.75, r_initial=torch.tensor([1.0, 0.0]), 
                  noise_level=0.1, seed=42):
         self.N_data = N_data
         self.t_tot = t_tot

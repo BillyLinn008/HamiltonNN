@@ -27,7 +27,6 @@ def train():
     optimizer = torch.optim.Adam(hamODE.parameters(), lr=1e-3)
     criterion = torch.nn.MSELoss()
     num_epochs = 100
-    # X_initial = X_train[0].detach().requires_grad_()
 
     for epoch in range(num_epochs):
         optimizer.zero_grad()

@@ -12,7 +12,7 @@ class Hnet(torch.nn.Module):
                 self.layers_list.append(torch.nn.Linear(input_dim, hidden_dim))
             else:
                 self.layers_list.append(torch.nn.Linear(hidden_dim, hidden_dim))
-            self.layers_list.append(torch.nn.ReLU())
+            self.layers_list.append(torch.nn.Tanh())
         
         # Output layer
         self.layers_list.append(torch.nn.Linear(hidden_dim, output_dim))
@@ -21,11 +21,10 @@ class Hnet(torch.nn.Module):
         self.model = torch.nn.Sequential(*self.layers_list)
 
     def forward(self, x):
-        x = x.detach().requires_grad_(True)  # Enable gradient computation for input x
+        x = x.detach().clone().requires_grad_(True)  # Ensure x is a new tensor with requires_grad=True
         # Forward pass through the neural network
-        H = self.model(x).sum()  # Ensure output is a scalar
-        dH_dx = grad(H, x, create_graph=True)[0] # Compute the gradient of H with respect to x
-        return H, dH_dx
+        H = self.model(x)  # Ensure output is a scalar
+        return H
     
 
 class Jmat(torch.nn.Module):
@@ -38,7 +37,7 @@ class Jmat(torch.nn.Module):
                 self.layers_list.append(torch.nn.Linear(input_dim, hidden_dim))
             else:
                 self.layers_list.append(torch.nn.Linear(hidden_dim, hidden_dim))
-            self.layers_list.append(torch.nn.ReLU())
+            self.layers_list.append(torch.nn.Tanh())
         
         # Output layer
         self.layers_list.append(torch.nn.Linear(hidden_dim, output_dim))
@@ -54,15 +53,58 @@ class Jmat(torch.nn.Module):
         J = (J - J.transpose(-1, -2)) / 2
         return J
 
-        
+
+# in NeuralNet.py
+
 class HamODE(torch.nn.Module):
     def __init__(self, input_dim=2, hidden_dim=64, layers=1):
         super(HamODE, self).__init__()
         self.Hnet = Hnet(input_dim, hidden_dim, layers)
         self.Jmat = Jmat(input_dim, hidden_dim, layers)
-        
+
     def forward(self, t, x):
-        H, dH_dx = self.Hnet(x)
-        J = self.Jmat(x)
-        return torch.matmul(J, dH_dx.unsqueeze(-1)).squeeze(-1)
+        with torch.enable_grad():
+            # === DEBUGGING LINES ===
+            print("⇢ before detach: x.requires_grad =", x.requires_grad)  # should be False
+            # =======================
+
+            # 1) detach & clone → brand-new tensor
+            x0 = x.detach().clone().requires_grad_(True)
+
+            # === DEBUGGING LINES ===
+            print("⇢ after setting:   x0.requires_grad =", x0.requires_grad,
+                " grad_fn:", x0.grad_fn)       # should be True and a grad_fn must exist
+            # =======================
+
+            # 2) compute scalar energy
+            H = self.Hnet(x0)           # shape [batch]
+
+            print("  H: requires_grad=", H.requires_grad, "  H.grad_fn=", H.grad_fn)
+
+            # 3) build ∇H graph for this x0
+            dH_dx = torch.autograd.grad(
+                H.sum(),                # sum → single scalar per batch
+                x0, 
+                create_graph=True
+            )[0]                         # shape [batch, dim]
+
+            # 4) apply your symplectic map J(x0)
+            J  = self.Jmat(x0)          # shape [batch, dim, dim]
+            out = (J @ dH_dx.unsqueeze(-1)).squeeze(-1)
+        return out
+
+
+# class HamODE(torch.nn.Module):
+#     def __init__(self, input_dim=2, hidden_dim=64, layers=1):
+#         super(HamODE, self).__init__()
+#         self.Hnet = Hnet(input_dim, hidden_dim, layers)
+#         self.Jmat = Jmat(input_dim, hidden_dim, layers)
+        
+#     def forward(self, t, x):
+#         x = x.clone().detach().requires_grad_(True)
+#         H = self.Hnet(x)
+#         # Compute the gradient of H with respect to x
+#         dH_dx = grad(H.sum(), x, create_graph=True)[0]
+#         J = self.Jmat(x)
+#         return torch.matmul(J, dH_dx.unsqueeze(-1)).squeeze(-1)
     

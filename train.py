@@ -1,9 +1,8 @@
 import torch
 from torchdiffeq import odeint_adjoint
-from torchdiffeq import odeint
-from NeuralNet import Hnet, Jmat, HamODE
+# from torchdiffeq import odeint
+from NeuralNet import HamODE
 from Data import Data
-from torch.utils.data import TensorDataset, DataLoader
 device='cpu'
 
 def data_prepare():
@@ -17,6 +16,9 @@ def data_prepare():
     # prepare test data: input is X_test and ground truth is y_test
     X_test, y_test, t_test = x_test[:-1], x_test[1:], t_test[:-1]
     return (X_train, y_train, t_train), (X_test, y_test, t_test)
+
+
+# LET'S FIGURE OUT HOW TO USE ODEINT_ADJOINT
 
 def train():
     (X_train, y_train, t_train), (X_test, y_test, t_test) = data_prepare()
@@ -32,7 +34,7 @@ def train():
         optimizer.zero_grad()
 
         # Solve the ODE for the whole batch of initial states:
-        y_pred = odeint(hamODE, X_train[0], t_train, method='dopri5')
+        y_pred = odeint_adjoint(hamODE, X_train[0], t_train, method='dopri5')
 
         loss = criterion(y_pred, y_train)
         loss.backward()

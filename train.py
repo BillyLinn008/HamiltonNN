@@ -33,12 +33,10 @@ def train():
 
 
     for epoch in range(num_epochs):
-        print("epoch: ", epoch)
         optimizer.zero_grad()
 
         # Solve the ODE for the whole batch of initial states:
         y_pred = odeint_adjoint(hamODE, X_train[0], t_train, method='dopri5')
-        print("y_pred: ", y_pred.shape)
 
         loss = criterion(y_pred, y_train)
         loss.backward()

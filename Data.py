@@ -4,17 +4,15 @@ from torchdiffeq import odeint
 import torch
 
 class Data():
-    def __init__(self, N_data=20, t_tot=10, ratio=0.75, r_initial=torch.tensor([1.0, 0.0]), 
+    def __init__(self, N_data=50, t_steps=50, t_tot=10, ratio=0.75, r_initial=torch.tensor([1.0, 0.0]), 
                  noise_level=0.1, seed=42):
         self.N_data = N_data
-        self.t_tot = t_tot
-        self.ratio = ratio
         self.seed = seed
         self.noise_level = noise_level
-        self.split = int(N_data * ratio)
+        self.split = int(t_steps * ratio)
         self.r_initial = r_initial
 
-        self.t = torch.linspace(0, t_tot, N_data)
+        self.t = torch.linspace(0, t_tot, t_steps)
         self.r = self.solver()
         
     # Define the dynamics of the system 
@@ -26,7 +24,9 @@ class Data():
     
     # Use the ODE solver to compute the trajectory
     def solver(self):
-        return odeint(self.dynamics, self.r_initial, self.t, method='dopri5')
+        r_initial_expanded = self.r_initial.unsqueeze(0).expand(self.N_data, 2)
+        initial_data = torch.normal(mean=r_initial_expanded, std=0.1) 
+        return odeint(self.dynamics, initial_data, self.t, method='dopri5')
 
     # Generate the data in the transformed phase space
     # where a = q + p and b = q - p

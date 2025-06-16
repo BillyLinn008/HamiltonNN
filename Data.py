@@ -4,7 +4,7 @@ from torchdiffeq import odeint
 import torch
 
 class Data():
-    def __init__(self, N_data=100, t_tot=10, ratio=0.75, r_initial=torch.tensor([1.0, 1.0]), 
+    def __init__(self, N_data=20, t_tot=10, ratio=0.75, r_initial=torch.tensor([1.0, 0.0]), 
                  noise_level=0.1, seed=42):
         self.N_data = N_data
         self.t_tot = t_tot
@@ -43,7 +43,7 @@ class Data():
         # generate noise
         torch.manual_seed(self.seed)
         noise = self.noise_level * torch.normal(mean=0, std=0.1, size=self.r.shape)
-        real_data = self.r + noise
+        real_data = self.r # + noise (Let's Ignore Noise For Now)
         a, b = real_data[self.split:,0] + real_data[self.split:, 1], real_data[self.split:, 0] - real_data[self.split:, 1]
         x = torch.stack((a, b), axis=1)
         return self.t[self.split:], x

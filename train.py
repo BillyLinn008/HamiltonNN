@@ -12,6 +12,7 @@ def data_prepare():
 
     # prepare training data: input is X_train and ground truth is y_train
     X_train, y_train, t_train = x_train[:-1], x_train[1:], t_train[:-1]
+    print("X_train: ", X_train.shape, "y_train: ", y_train.shape, "t_train: ", t_train.shape)
 
     # prepare test data: input is X_test and ground truth is y_test
     X_test, y_test, t_test = x_test[:-1], x_test[1:], t_test[:-1]
@@ -30,11 +31,14 @@ def train():
     criterion = torch.nn.MSELoss()
     num_epochs = 100
 
+
     for epoch in range(num_epochs):
+        print("epoch: ", epoch)
         optimizer.zero_grad()
 
         # Solve the ODE for the whole batch of initial states:
         y_pred = odeint_adjoint(hamODE, X_train[0], t_train, method='dopri5')
+        print("y_pred: ", y_pred.shape)
 
         loss = criterion(y_pred, y_train)
         loss.backward()

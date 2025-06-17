@@ -54,6 +54,21 @@ class Jmat(torch.nn.Module):
         return J
 
 
+class HamODE(torch.nn.Module):
+    def __init__(self, input_dim=2, hidden_dim=64, layers=1):
+        super(HamODE, self).__init__()
+        self.Hnet = Hnet(input_dim, hidden_dim, layers)
+        self.Jmat = Jmat(input_dim, hidden_dim, layers)
+        
+    def forward(self, t, x):
+        with torch.enable_grad():
+            x = x.requires_grad_(True).squeeze()
+            H = self.Hnet(x).squeeze()  # Ensure H is a scalar
+            # Compute the gradient of H with respect to x
+            dH_dx = grad(H.sum(), x, create_graph=True)[0]
+            J = self.Jmat(x).squeeze()  # Ensure J is a 2x2 matrix
+            return torch.matmul(J, dH_dx.unsqueeze(-1)).squeeze(-1)
+    
 # in NeuralNet.py
 
 # class HamODE(torch.nn.Module):
@@ -82,20 +97,3 @@ class Jmat(torch.nn.Module):
 
 #             out = (J @ dH_dx.unsqueeze(-1)).squeeze(-1)
 #         return out
-
-
-class HamODE(torch.nn.Module):
-    def __init__(self, input_dim=2, hidden_dim=64, layers=1):
-        super(HamODE, self).__init__()
-        self.Hnet = Hnet(input_dim, hidden_dim, layers)
-        self.Jmat = Jmat(input_dim, hidden_dim, layers)
-        
-    def forward(self, t, x):
-        with torch.enable_grad():
-            x = x.requires_grad_(True).squeeze()
-            H = self.Hnet(x).squeeze()  # Ensure H is a scalar
-            # Compute the gradient of H with respect to x
-            dH_dx = grad(H.sum(), x, create_graph=True)[0]
-            J = self.Jmat(x).squeeze()  # Ensure J is a 2x2 matrix
-            return torch.matmul(J, dH_dx.unsqueeze(-1)).squeeze(-1)
-    

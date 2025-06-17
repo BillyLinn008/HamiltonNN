@@ -1,6 +1,5 @@
 import torch
 from torchdiffeq import odeint_adjoint
-# from torchdiffeq import odeint
 from NeuralNet import HamODE
 from Data import Data
 device='cpu'
@@ -11,11 +10,11 @@ def data_prepare():
     t_test, x_test = data.test_data()
 
     # prepare training data: input is X_train and ground truth is y_train
-    X_train, y_train, t_train = x_train[:-1], x_train[1:], t_train[:-1]
-    print("X_train: ", X_train.shape, "y_train: ", y_train.shape, "t_train: ", t_train.shape)
+    X_train, y_train, t_train = x_train[:, :-1, :], x_train[:, 1:, :], t_train[:-1]
+    print("X_train shape: ", X_train.shape, "y_train shape: ", y_train.shape, "t_train shape: ", t_train.shape)
 
     # prepare test data: input is X_test and ground truth is y_test
-    X_test, y_test, t_test = x_test[:-1], x_test[1:], t_test[:-1]
+    X_test, y_test, t_test = x_test[:, :-1, :], x_test[:, 1:, :], t_test[:-1]
     return (X_train, y_train, t_train), (X_test, y_test, t_test)
 
 

@@ -45,7 +45,7 @@ class Data():
         real_data = self.r # + noise
         a, b = real_data[:self.split, :, 0] + real_data[:self.split, :, 1], real_data[:self.split, :, 0] - real_data[:self.split, :, 1]
         x = torch.stack((a, b), axis=-1)
-        return self.t[:self.split], x
+        return self.t, x
 
     def test_data(self):
         # generate noise
@@ -54,7 +54,7 @@ class Data():
         real_data = self.r # + noise (Let's Ignore Noise For Now)
         a, b = real_data[self.split:, :, 0] + real_data[self.split:, :, 1], real_data[self.split:, :, 0] - real_data[self.split:, :, 1]
         x = torch.stack((a, b), axis=-1)
-        return self.t[self.split:], x
+        return self.t, x
 
     def plot_data(self):
         # pull out your data
